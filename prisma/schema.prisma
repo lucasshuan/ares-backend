@@ -1,0 +1,293 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_DIRECT_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MOD
+  GUEST
+}
+
+enum MatchStatus {
+  ACCEPTED
+  REJECTED
+  PENDING_ACCEPTANCE
+  IN_PROGRESS
+  SCHEDULED
+}
+
+enum TourneyFormat {
+  SINGLE_ELIMINATION
+  DOUBLE_ELIMINATION
+  SWISS
+  ROUND_ROBIN
+  FREE_FOR_ALL
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          UserRole  @default(GUEST)
+  country       String?
+  biography     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+
+  accounts         Account[]
+  sessions         Session[]
+  players          Player[]
+  ownedClans       Clan[]
+  clanApplications ClanApplication[]
+  clanInvites      ClanInvite[]
+  tourneysMade     Tourney[]
+  matchesMade      Match[]
+  following        User[]            @relation("UserFollowers")
+  followers        User[]            @relation("UserFollowers")
+}
+
+model Player {
+  id        String   @id @default(cuid())
+  userId    String
+  gameId    String
+  regionId  String
+  username  String   @unique
+  rating    Int      @default(0)
+  anonymous Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  participations  Participation[]
+  clanMemberships ClanMember[]
+  tourneyRosters  TourneyRoster[]
+
+  @@unique([gameId, username])
+}
+
+model Game {
+  id                 String   @id @default(cuid())
+  name               String   @unique
+  description        String?
+  officialWebsiteUrl String?
+  steamUrl           String?
+  thumbnailUrl       String?
+  backgroundUrl      String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now()) @updatedAt
+
+  matches Match[]
+  players Player[]
+  clans   Clan[]
+  regions GameRegion[]
+}
+
+model GameRegion {
+  id        String   @id @default(cuid())
+  gameId    String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  game Game @relation(fields: [gameId], references: [id])
+
+  matches  Match[]
+  tourneys Tourney[]
+}
+
+model Match {
+  id                String      @id @default(cuid())
+  creatorId         String
+  tourneyScheduleId String?
+  gameId            String
+  gameRegionId      String
+  status            MatchStatus @default(ACCEPTED)
+  screenshotUrl     String?
+  streamUrl         String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @default(now()) @updatedAt
+
+  creator    User             @relation(fields: [creatorId], references: [id])
+  game       Game             @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameRegion GameRegion       @relation(fields: [gameRegionId], references: [id])
+  schedule   TourneySchedule? @relation(fields: [tourneyScheduleId], references: [id])
+
+  teams Team[]
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  matchId   String
+  score     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  match Match @relation(fields: [matchId], references: [id])
+
+  participations Participation[]
+}
+
+model Participation {
+  id        String   @id @default(cuid())
+  teamId    String
+  playerId  String
+  info      Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+}
+
+model Clan {
+  id          String   @id @default(cuid())
+  ownerId     String
+  name        String
+  description String?
+  logoUrl     String?
+  rating      Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  games        Game[]
+  members      ClanMember[]
+  applications ClanApplication[]
+  invites      ClanInvite[]
+}
+
+model ClanMember {
+  id        String   @id @default(cuid())
+  userId    String
+  clanId    String
+  label     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  clan   Clan   @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ClanInvite {
+  id        String   @id @default(cuid())
+  clanId    String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  clan Clan @relation(fields: [clanId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+}
+
+model ClanApplication {
+  id        String   @id @default(cuid())
+  plead     String?
+  clanId    String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  clan Clan @relation(fields: [clanId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Tourney {
+  id             String        @id @default(cuid())
+  organizerId    String
+  gameRegionId   String?
+  name           String
+  description    String?
+  regionLocked   Boolean
+  manualApproval Boolean
+  maxScoreCount  Int
+  matchesCount   Int
+  minTeamLength  Int?
+  maxTeamLength  Int?
+  format         TourneyFormat
+  startsAt       DateTime?
+  finishesAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @default(now()) @updatedAt
+
+  region    GameRegion? @relation(fields: [gameRegionId], references: [id])
+  organizer User        @relation(fields: [organizerId], references: [id])
+
+  rosters TourneyRoster[]
+}
+
+model TourneyRoster {
+  id        String   @id @default(cuid())
+  tourneyId String
+  name      String
+  logoUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  tourney Tourney @relation(fields: [tourneyId], references: [id])
+
+  players   Player[]
+  schedules TourneySchedule[]
+}
+
+model TourneySchedule {
+  id        String    @id @default(cuid())
+  tourneyId String
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+
+  matches      Match[]
+  rosters      TourneyRoster[]
+  successors   TourneySchedule[] @relation("PlannedTourneySchedule")
+  predecessors TourneySchedule[] @relation("PlannedTourneySchedule")
+}
