@@ -1,13 +1,13 @@
 import { PrismaService } from '@/app/clients/prisma/prisma.service';
-import { CreateTeamDTO } from './team.interface';
+import { CreateParticipationDTO } from './participation.interface';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class TeamService {
+export class ParticipationService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createMany(data: CreateTeamDTO[]) {
-    return this.prisma.team.createMany({
+  async createMany(data: CreateParticipationDTO[]) {
+    return this.prisma.participation.createMany({
       data,
     });
   }

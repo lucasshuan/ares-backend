@@ -84,11 +84,13 @@ model User {
   accounts         Account[]
   sessions         Session[]
   players          Player[]
-  ownedClans       Clan[]
-  clanApplications ClanApplication[]
-  clanInvites      ClanInvite[]
   tourneysMade     Tourney[]
   matchesMade      Match[]
+  clansOwned       Clan[]
+  clanMemberships  ClanMember[]
+  clanApplications ClanApplication[]
+  clanInvites      ClanInvite[]
+  clanFollows      Clan[]            @relation("ClanFollowers")
   following        User[]            @relation("UserFollowers")
   followers        User[]            @relation("UserFollowers")
 }
@@ -100,16 +102,15 @@ model Player {
   regionId  String
   username  String   @unique
   rating    Int      @default(0)
-  anonymous Boolean  @default(false)
+  anonymity Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
-  participations  Participation[]
-  clanMemberships ClanMember[]
-  tourneyRosters  TourneyRoster[]
+  participations Participation[]
+  tourneyRosters TourneyRoster[]
 
   @@unique([gameId, username])
 }
@@ -125,10 +126,10 @@ model Game {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @default(now()) @updatedAt
 
-  matches Match[]
-  players Player[]
-  clans   Clan[]
-  regions GameRegion[]
+  matches      Match[]
+  players      Player[]
+  clanBranches ClanBranch[]
+  regions      GameRegion[]
 }
 
 model GameRegion {
@@ -194,16 +195,29 @@ model Clan {
   name        String
   description String?
   logoUrl     String?
-  rating      Int?
+  rating      Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
 
   owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
-  games        Game[]
+  followers    User[]            @relation("ClanFollowers")
   members      ClanMember[]
   applications ClanApplication[]
   invites      ClanInvite[]
+  branches     ClanBranch[]
+}
+
+model ClanBranch {
+  id        String   @id @default(cuid())
+  clanId    String
+  gameId    String
+  rating    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  clan Clan @relation(fields: [clanId], references: [id])
+  game Game @relation(fields: [gameId], references: [id])
 }
 
 model ClanMember {
@@ -214,8 +228,8 @@ model ClanMember {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  clan   Clan   @relation(fields: [clanId], references: [id], onDelete: Cascade)
-  player Player @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clan Clan @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ClanInvite {

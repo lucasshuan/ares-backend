@@ -1,9 +1,9 @@
-import { Player, Prisma, Region } from "@prisma/client";
+import { Player, Prisma } from '@prisma/client';
 
 export interface ListPlayersDTO {
   username?: string;
   gameName?: string;
-  region?: Region;
+  regionId?: string;
   country?: string;
   order?: Prisma.SortOrder;
   skip?: number;
@@ -12,7 +12,7 @@ export interface ListPlayersDTO {
 
 export type CreatePlayerDTO = Pick<
   Player,
-  "username" | "gameId" | "userId" | "rating"
+  'username' | 'gameId' | 'regionId' | 'userId' | 'rating'
 >;
 
-export type UpdatePlayerDTO = Pick<Player, "id"> & Partial<CreatePlayerDTO>;
+export type UpdatePlayerDTO = Pick<Player, 'id'> & Partial<CreatePlayerDTO>;
