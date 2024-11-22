@@ -1,5 +1,4 @@
-import { Match } from '@prisma/client';
-import { CreateTeamDTO } from '../team/team.interface';
+import { Match, MatchOutcome } from '@prisma/client';
 
 type BaseCreateMatchDTO = Pick<
   Match,
@@ -9,7 +8,16 @@ type BaseCreateMatchDTO = Pick<
   | 'tourneyScheduleId'
   | 'creatorId'
   | 'gameId'
+  | 'gameRegionId'
 >;
+
+export type CreateTeamDTO = {
+  outcome: MatchOutcome;
+  score: number;
+  players: {
+    id: string;
+  }[];
+};
 
 export type CreateMatchDTO = {
   teams: CreateTeamDTO[];

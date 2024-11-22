@@ -1,4 +1,4 @@
-export interface EloRatingInput {
+export interface EloRatingDTO {
   rating1: number;
   rating2: number;
   score1: number;
@@ -6,7 +6,7 @@ export interface EloRatingInput {
   k: number;
 }
 
-export interface TeamAverageRatingInput {
+export interface TeamAverageRatingDTO {
   id: string;
   score: number;
   participations: {

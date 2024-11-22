@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { EloRatingInput, TeamAverageRatingInput } from './elo.interface';
+import { EloRatingDTO, TeamAverageRatingDTO } from './elo.interface';
 
 @Injectable()
 export class EloService {
@@ -7,7 +7,7 @@ export class EloService {
     return 1 / (1 + Math.pow(10, (rating1 - rating2) / 400));
   }
 
-  rating({ rating1, rating2, score1, score2, k }: EloRatingInput) {
+  rating({ rating1, rating2, score1, score2, k }: EloRatingDTO) {
     const maxScore = Math.max(score1, score2);
     const outcome = (score1 - score2) / (2 * maxScore) + 0.5;
 
@@ -16,7 +16,7 @@ export class EloService {
     return rating1 + k * (outcome - probability);
   }
 
-  teamAverageRating(team: TeamAverageRatingInput) {
+  teamAverageRating(team: TeamAverageRatingDTO) {
     const numMembers = team.participations.length;
     let averageRating = 0;
 

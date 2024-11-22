@@ -22,6 +22,12 @@ enum MatchStatus {
   SCHEDULED
 }
 
+enum MatchOutcome {
+  WIN
+  LOSS
+  DRAW
+}
+
 enum TourneyFormat {
   SINGLE_ELIMINATION
   DOUBLE_ELIMINATION
@@ -150,7 +156,7 @@ model Match {
   creatorId         String
   tourneyScheduleId String?
   gameId            String
-  gameRegionId      String
+  gameRegionId      String?
   status            MatchStatus @default(ACCEPTED)
   screenshotUrl     String?
   streamUrl         String?
@@ -159,18 +165,19 @@ model Match {
 
   creator    User             @relation(fields: [creatorId], references: [id])
   game       Game             @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  gameRegion GameRegion       @relation(fields: [gameRegionId], references: [id])
+  gameRegion GameRegion?      @relation(fields: [gameRegionId], references: [id])
   schedule   TourneySchedule? @relation(fields: [tourneyScheduleId], references: [id])
 
   teams Team[]
 }
 
 model Team {
-  id        String   @id @default(cuid())
+  id        String       @id @default(cuid())
   matchId   String
   score     Float
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  outcome   MatchOutcome
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @default(now()) @updatedAt
 
   match Match @relation(fields: [matchId], references: [id])
 
