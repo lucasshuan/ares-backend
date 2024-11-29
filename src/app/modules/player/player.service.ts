@@ -43,7 +43,6 @@ export class PlayerService {
       include: {
         user: true,
         game: true,
-        clanMemberships: true,
         participations: {
           include: {
             team: {
